@@ -5,8 +5,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Message;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+
+import static com.example.wordstudy.MainActivity.currentDownloadStatus;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     SQLiteDatabase db;
@@ -21,6 +26,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_MEAN = "mean";
     private static final String COUNT = "count";
 
+    TextView percent;
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         //onCreate(this.getWritableDatabase());
@@ -28,7 +34,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        System.out.println("DB 생성 중");
+        System.out.println("msg : TABLE 생성 시작");
         String CREATE_TABLE_WORD =
                 "CREATE TABLE " + TABLE_WORD + "(" +
                         KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -39,10 +45,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         try{
             db.execSQL(CREATE_TABLE_WORD);
         }catch (Exception e){
-            System.out.println("테이블 생성 실패");
+            System.out.println("msg : TABLE 생성 실패");
             e.printStackTrace();
         }finally {
-            System.out.println("테이블 생성 완료");
+            System.out.println("msg : TABLE 생성 완료");
         }
     }
     public void dropTable(SQLiteDatabase db){
@@ -50,10 +56,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         try {
             db.execSQL(DROP_TABLE_WORD);
         }catch (Exception e){
-            System.out.println("테이블 삭제 실패");
+            System.out.println("msg : TABLE 삭제 실패");
             e.printStackTrace();
         }finally {
-            System.out.println("테이블 삭제 완료");
+            System.out.println("msg : TABLE 삭제 완료");
         }
     }
     @Override
@@ -64,15 +70,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void add(SQLiteDatabase db, ArrayList<WordData> list) {
 
+    public void add(SQLiteDatabase db, LinkedList<WordData> list) {
+        System.out.println("msg : INSERT 작업 시작");
+        System.out.println("msg : list 크기 : "+list.size());
         ContentValues values = new ContentValues();
-        for(int i=0;i<list.size();i++){
-            values.put(KEY_NAME,list.get(i).getName());
-            values.put(KEY_MEAN,list.get(i).getMean());
-            db.insert(TABLE_WORD, null, values);
+        Message msg = new Message();
+        try{
+            for(int i=0;i<list.size();i++){
+                values.put(KEY_NAME,list.get(i).getName());
+                values.put(KEY_MEAN,list.get(i).getMean());
+                db.insert(TABLE_WORD, null, values);
+                currentDownloadStatus++;
+            }
+            db.close();
+        }catch (Exception e){
+            System.err.println("msg : 무언가 문제 발생");
+            e.printStackTrace();
         }
-        db.close();
+
+        System.out.println("msg : INSERT 작업 종료");
     }
 
     public ArrayList<WordData> getAll(SQLiteDatabase db) {
